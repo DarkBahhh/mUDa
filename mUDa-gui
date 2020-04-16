@@ -1,0 +1,111 @@
+#!/bin/bash
+### Interface GUI pour le programme mUDa.sh, mUDa permet d'effectuer
+### automatiquement des modifications sur le systeme Ubuntu Desktop dans des cas
+### specifiques. mUDa utilise des modules correspondant au modification a
+### effectuer sur le systeme.
+### L'interface GUI permet la selection d'un module et son activation par voie
+### graphique.
+###
+### Modules:
+###    - Son:
+###        Le module Son permet de booster le son du PC, selectionner le module
+###        Son et cliquer 'oui' pour activer ou 'non' pour desactiver. Par
+###        defaut, le module place le son à 150% de maximum.
+###    - Lumino:
+###        Le module Lumino permet de booster la luminosite du PC, selectionner
+###        le module Lumino et cliquer 'oui' pour activer ou 'non' pour
+###        desactiver.
+###    - nVPN:
+###        Le module nVPN est specifique a NordVPN, il permet d'activer le
+###        KillSwitch, selectionner le module nVPN et cliquer 'oui' pour activer
+###        ou 'non' pour desactiver.
+###
+### Les variable permettant de modifier l'impact des module (par exemple 200%
+### maximum pour le son) sont contenue dans le programme mUDa.sh et ne sont pas
+### modifiable pour l'interface GUI.
+###
+### Ne pas modifier ce fichier!
+
+# Programme mUDa:
+sname='mUDa.sh'
+spath='/usr/bin'
+
+# Fonctions d'appel des modules:
+son(){
+    zenity --question --title="Son" --width 300 --text='Activer ou non le Son'
+    if [[ $? -eq 0 ]]; then
+        $script son start
+        if [[ $? -ne 0 ]]; then
+            error
+        else
+            zenity --info --title="Son" --width 300 --text "Son active"
+	      fi
+    else
+        $script son stop
+        if [[ $? -ne 0 ]]; then
+            error
+        else
+            zenity --info --title="Son" --width 300 --text "Son desactive"
+	      fi
+    fi
+}
+
+lumino(){
+    zenity --question --title="Lumino" --width 300 --text='Activer ou non le Lumino'
+    if [[ $? -eq 0 ]]; then
+        $script lumino start
+        if [[ $? -ne 0 ]]; then
+            error
+        else
+            zenity --info --title="Lumino" --width 300 --text "Lumino active"
+	      fi
+    else
+        $script lumino stop
+        if [[ $? -ne 0 ]]; then
+            error
+        else
+            zenity --info --title="Lumino" --width 300 --text "Lumino desactive"
+	      fi
+    fi
+}
+
+vpn(){
+    zenity --question --title="VPN" --width 300 --text='Activer ou non le NordVPN KillSwitch'
+    if [[ $? -eq 0 ]]; then
+        $script vpn start
+        if [[ $? -ne 0 ]]; then
+            error
+        else
+            zenity --info --title="VPN" --width 300 --text "NordVPN KillSwitch active"
+	      fi
+    else
+        $script vpn stop
+        if [[ $? -ne 0 ]]; then
+            error
+        else
+            zenity --info --title="VPN" --width 300 --text "NordVPN desactive"
+	      fi
+    fi
+}
+
+# Fonction de gestion d'erreurs
+error(){
+    zenity --error --title="mUDa" --width 300 --text "Erreur durant l'execution du programme, contacter l'admin."
+    exit 2
+}
+
+# Boucle principale:
+#    Verification du programme:
+script=$spath'/'$sname
+if [[ ! -x $script ]]; then
+    zenity --error --title="mUDa" --width 300 --text "Le programme principal est introuvable, contacter l'admin."
+    exit 1
+fi
+#    Choix du module:
+mode=$(zenity --entry --title="mUDa" --width 300 --text="Choisir le module:" --entry-text="Son" Lumino VPN Annuler)
+case $mode in
+    'Son')	son ;;
+    'Lumino') 	lumino ;;
+    'VPN') 	vpn ;;
+    'Annuler') 	exit 0 ;;
+esac
