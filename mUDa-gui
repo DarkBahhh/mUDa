@@ -8,9 +8,10 @@
 ###
 ### Modules:
 ###    - Son:
-###        Le module Son permet de booster le son du PC, selectionner le module
-###        Son et cliquer 'oui' pour activer ou 'non' pour desactiver. Par
-###        defaut, le module place le son à 150% de maximum.
+###        Le module Son permet de booster le volume du PC (moyennant perte de
+###        qualité), selectionner le module Son et cliquer 'oui' pour activer ou
+###        'non' pour desactiver. Par defaut, le module place le son à 150% de
+###        maximum.
 ###    - Lumino:
 ###        Le module Lumino permet de booster la luminosite du PC, selectionner
 ###        le module Lumino et cliquer 'oui' pour activer ou 'non' pour
@@ -21,8 +22,8 @@
 ###        ou 'non' pour desactiver.
 ###
 ### Les variable permettant de modifier l'impact des module (par exemple 200%
-### maximum pour le son) sont contenue dans le programme mUDa.sh et ne sont pas
-### modifiable pour l'interface GUI.
+### maximum pour le son) sont contenues dans le programme mUDa.sh et ne sont pas
+### modifiable par l'interface GUI.
 ###
 ### Ne pas modifier ce fichier!
 
@@ -88,6 +89,12 @@ vpn(){
     fi
 }
 
+# Fonction de recuperation d'etat des modules:
+etat(){
+    module_state=$($script state)
+    zenity --info --title="Etat" --width 300 --text "$module_state"
+}
+
 # Fonction de gestion d'erreurs
 error(){
     zenity --error --title="mUDa" --width 300 --text "Erreur durant l'execution du programme, contacter l'admin."
@@ -102,10 +109,11 @@ if [[ ! -x $script ]]; then
     exit 1
 fi
 #    Choix du module:
-mode=$(zenity --entry --title="mUDa" --width 300 --text="Choisir le module:" --entry-text="Son" Lumino VPN Annuler)
+mode=$(zenity --entry --title="mUDa" --width 300 --text="Choisir le module:" --entry-text="Son" Lumino VPN "Etat des modules" Annuler)
 case $mode in
     'Son')	son ;;
     'Lumino') 	lumino ;;
     'VPN') 	vpn ;;
+    'Etat des modules')  etat ;;
     'Annuler') 	exit 0 ;;
 esac
