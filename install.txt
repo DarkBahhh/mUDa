@@ -1,5 +1,5 @@
 Pour installer mUDa:
-     Copier le fichier mUDa.sh dans le répertoire "/usr/bin".
+     Copier le fichier mUDa.sh dans le répertoire "/usr/local/bin".
      Copier le fichier mUDa-gui à un endroit accéssible comme le bureau.
 
 Double-cliquer sur mUDa-gui pour lancer l'application.

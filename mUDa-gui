@@ -33,7 +33,7 @@ app_width=500
 
 # Programme mUDa:
 sname='mUDa.sh'
-spath='/usr/bin'
+spath='/usr/local/bin'
 
 # Fonctions d'appel des modules:
 sonmax(){
