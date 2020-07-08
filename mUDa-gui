@@ -7,84 +7,130 @@
 ### graphique.
 ###
 ### Modules:
-###    - Son:
-###        Le module Son permet de booster le volume du PC (moyennant perte de
-###        qualité), selectionner le module Son et cliquer 'oui' pour activer ou
+###    - Sonmax:
+###        Le module Sonmax permet de booster le volume du PC (moyennant perte de
+###        qualité), selectionner le module Sonmax et cliquer 'oui' pour activer ou
 ###        'non' pour desactiver. Par defaut, le module place le son à 150% de
 ###        maximum.
-###    - Lumino:
-###        Le module Lumino permet de booster la luminosite du PC, selectionner
-###        le module Lumino et cliquer 'oui' pour activer ou 'non' pour
+###    - Luminomax:
+###        Le module Luminomax permet de booster la luminomaxsite du PC, selectionner
+###        le module Luminomax et cliquer 'oui' pour activer ou 'non' pour
 ###        desactiver.
 ###    - nVPN:
-###        Le module nVPN est specifique a NordVPN, il permet d'activer le
-###        KillSwitch, selectionner le module nVPN et cliquer 'oui' pour activer
-###        ou 'non' pour desactiver.
+###        Le module nVPN est specifique a NordVPN, il permet de se connecter
+###        a NordVPN et d'activer le KillSwitch de NordVPN. Lors de la connexion
+###        on peut choisir entre un serveur spécial pour le peer2peer pour le
+###        telechargement ou un serveur normal pour etre en securite dans un réseau
+###        public.
 ###
-### Les variable permettant de modifier l'impact des module (par exemple 200%
+### Les variable permettant de modifier l'impact des modules (par exemple 200%
 ### maximum pour le son) sont contenues dans le programme mUDa.sh et ne sont pas
 ### modifiable par l'interface GUI.
 ###
-### Ne pas modifier ce fichier!
+### La ligne suivante permet de modifier la taille des fenetres:
+app_width=500
+### Ne pas modifier la suite de ce fichier!
 
 # Programme mUDa:
 sname='mUDa.sh'
 spath='/usr/bin'
 
 # Fonctions d'appel des modules:
-son(){
-    zenity --question --title="Son" --width 300 --text='Activer ou non le Son'
+sonmax(){
+    zenity --question --title="SonMax" --width $app_width --text='Activer ou non le SonMax'
     if [[ $? -eq 0 ]]; then
-        $script son start
-        if [[ $? -ne 0 ]]; then
-            error
+        $script sonmax start
+        if [[ $? -eq 0 ]]; then
+            zenity --info --title="SonMax" --width $app_width --text "SonMax active."
         else
-            zenity --info --title="Son" --width 300 --text "Son active"
+            error
 	      fi
     else
-        $script son stop
-        if [[ $? -ne 0 ]]; then
-            error
+        $script sonmax stop
+        if [[ $? -eq 0 ]]; then
+            zenity --info --title="SonMax" --width $app_width --text "SonMax desactive."
         else
-            zenity --info --title="Son" --width 300 --text "Son desactive"
+            error
 	      fi
     fi
 }
 
-lumino(){
-    zenity --question --title="Lumino" --width 300 --text='Activer ou non le Lumino'
+luminomax(){
+    zenity --question --title="LuminoMax" --width $app_width --text='Activer ou non le LuminoMax.'
     if [[ $? -eq 0 ]]; then
-        $script lumino start
-        if [[ $? -ne 0 ]]; then
-            error
+        $script luminomax start
+        if [[ $? -eq 0 ]]; then
+            zenity --info --title="LuminoMax" --width $app_width --text "LuminoMax active."
         else
-            zenity --info --title="Lumino" --width 300 --text "Lumino active"
+            error
 	      fi
     else
-        $script lumino stop
-        if [[ $? -ne 0 ]]; then
-            error
+        $script luminomax stop
+        if [[ $? -eq 0 ]]; then
+            zenity --info --title="LuminoMax" --width $app_width --text "LuminoMax desactive."
         else
-            zenity --info --title="Lumino" --width 300 --text "Lumino desactive"
+            error
 	      fi
     fi
 }
 
-vpn(){
-    zenity --question --title="VPN" --width 300 --text='Activer ou non le NordVPN KillSwitch'
-    if [[ $? -eq 0 ]]; then
-        $script vpn start
-        if [[ $? -ne 0 ]]; then
-            error
+nvpn(){
+    vpn_task=$(zenity --entry --title="Nvpn" --width $app_width --text="Choisir:" --entry-text="Connexion" "Compte NordVPN"  Annuler)
+    if [[ $vpn_task == 'Compte NordVPN' ]]; then
+        vpn_compte=$(zenity --entry --title="Nvpn" --width $app_width --text="Renseigner le compte NordVPN:")
+        vpn_pass=$(zenity --password --title="Nvpn" --width $app_width --text="Renseigner le mot de passe NordVPN:")
+        $script nvpn Register set $vpn_compte $vpn_pass
+        if [[ $? -eq 0 ]]; then
+            zenity --info --title="Nvpn" --width $app_width --text "Le compte est enregistre."
         else
-            zenity --info --title="VPN" --width 300 --text "NordVPN KillSwitch active"
+            vpn_account=$($script nvpn Register info)
+            if [[ $? -eq 0 ]]; then
+                zenity --info --title="Nvpn" --width $app_width --text "L'enregistrement n'a pas abouti.\nCela peut vouloir dire que les informations de connexion sont incorrectes. ..."
+                zenity --info --title="Nvpn" --width $app_width --text "Cela arrive aussi si vous etes deja enregistrer.\nSuivant les informations ci-dessous connecter vous directement au VPN ou retenter l'enregistrement:\n$vpn_account"
+                zenity --question --title="Nvpn" --width $app_width --text='Continuer vers la connexion NordVPN'
+                if [[ $? -eq 1 ]]; then
+                    exit 0
+                fi
+            else
+                error
+	          fi
+	      fi
+    fi
+    zenity --question --title="Nvpn" --width $app_width --text='Activer ou non la connexion NordVPN et le NordVPN KillSwitch.'
+    if [[ $? -eq 0 ]]; then
+        vpn_mode=$(zenity --entry --title="Nvpn" --width $app_width --text="Choisir le module:" --entry-text="P2P" "RsxPublic" Annuler)
+        zenity --question --title="Nvpn" --width $app_width --text='Voulez-vous imposer le pays hote pour la connexion?'
+        if [[ $? -eq 0 ]]; then
+            vpn_pays=$(zenity --entry --title="Nvpn" --width $app_width --text="Renseigner le pays:")
+        fi
+        if [[ $vpn_mode == 'RsxPublic' ]]; then
+            $script nvpn start PUB $vpn_pays
+            rc=$?
+        elif [[ $vpn_mode == 'P2P' ]]; then
+            $script nvpn start P2P $vpn_pays
+            rc=$?
+        else
+            exit 0
+        fi
+        echo $rc
+        if [[ $rc -eq 0 ]]; then
+            zenity --info --title="Nvpn" --width $app_width --text "Connexion NordVPN active."
+        elif [[ $rc -eq 6 ]]; then
+            zenity --question --title="Nvpn" --width $app_width --text "Le nom du pays n'est pas reconnu par NordVPN, voulez-vous une liste des pays disponibles avec NordVPN?"
+            if [[ $? -eq 0 ]]; then
+                countries=$($script nvpn "CountList")
+                zenity --info --title="Nvpn" --width $app_width --text "Copier un nom, relancer mUDa et coller le au moment d'indiquer le pays.\n$countries"
+                zenity --info --title="Nvpn" --width $app_width --text "N'imposer le pays que pour contourner un blocage, sinon laisser NordVPN trouver le meilleur serveur pour vous."
+            fi
+        else
+            error
 	      fi
     else
-        $script vpn stop
-        if [[ $? -ne 0 ]]; then
-            error
+        $script nvpn stop
+        if [[ $? -eq 0 ]]; then
+            zenity --info --title="Nvpn" --width $app_width --text "Connexion NordVPN desactive."
         else
-            zenity --info --title="VPN" --width 300 --text "NordVPN desactive"
+            error
 	      fi
     fi
 }
@@ -92,12 +138,12 @@ vpn(){
 # Fonction de recuperation d'etat des modules:
 etat(){
     module_state=$($script state)
-    zenity --info --title="Etat" --width 300 --text "$module_state"
+    zenity --info --title="Etat" --width $app_width --text "Modules:\n$module_state"
 }
 
 # Fonction de gestion d'erreurs
 error(){
-    zenity --error --title="mUDa" --width 300 --text "Erreur durant l'execution du programme, contacter l'admin."
+    zenity --error --title="mUDa" --width $app_width --text "Erreur durant l'execution du programme, contacter l'admin."
     exit 2
 }
 
@@ -105,15 +151,15 @@ error(){
 #    Verification du programme:
 script=$spath'/'$sname
 if [[ ! -x $script ]]; then
-    zenity --error --title="mUDa" --width 300 --text "Le programme principal est introuvable, contacter l'admin."
+    zenity --error --title="mUDa" --width $app_width --text "Le programme principal est introuvable, le nom du fichier est \"$sname\" et il est attendu dans le dossier \"$path\"."
     exit 1
 fi
 #    Choix du module:
-mode=$(zenity --entry --title="mUDa" --width 300 --text="Choisir le module:" --entry-text="Son" Lumino VPN "Etat des modules" Annuler)
+mode=$(zenity --entry --title="mUDa" --width $app_width --text="Choisir le module:" --entry-text=SonMax LuminoMax Nvpn "Etat des modules" Annuler)
 case $mode in
-    'Son')	son ;;
-    'Lumino') 	lumino ;;
-    'VPN') 	vpn ;;
+    'SonMax')	sonmax ;;
+    'LuminoMax') 	luminomax ;;
+    'Nvpn') 	nvpn ;;
     'Etat des modules')  etat ;;
     'Annuler') 	exit 0 ;;
 esac
