@@ -29,6 +29,11 @@
 ###
 ### La ligne suivante permet de modifier la taille des fenetres:
 app_width=500
+###
+### La ligne suivante permet de choisir le module active dans l'interface; (la liste par
+### defaut est "SonMax LuminoMax Nvpn", les modules sont separes par des espaces):
+modules_list="SonMax LuminoMax Nvpn"
+###
 ### Ne pas modifier la suite de ce fichier!
 
 # Programme mUDa:
@@ -155,7 +160,7 @@ if [[ ! -x $script ]]; then
     exit 1
 fi
 #    Choix du module:
-mode=$(zenity --entry --title="mUDa" --width $app_width --text="Choisir le module:" --entry-text=SonMax LuminoMax Nvpn "Etat des modules" Annuler)
+mode=$(zenity --entry --title="mUDa" --width $app_width --text="Choisir le module:" --entry-text=$modules_list "Etat des modules" Annuler)
 case $mode in
     'SonMax')	sonmax ;;
     'LuminoMax') 	luminomax ;;
