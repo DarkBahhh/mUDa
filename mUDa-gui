@@ -34,11 +34,17 @@ app_width=500
 ### defaut est "SonMax LuminoMax Nvpn", les modules sont separes par des espaces):
 modules_list="SonMax LuminoMax Nvpn"
 ###
+### La ligne suivante permet d'indiquer le chemin d'acces vers le programme systeme
+### "mUDa.sh", modifier le chemin si le programme n'est pas a l'enplacement par
+### defaut:
+#spath='/usr/local/bin'
+spath='./'
+###
+###
 ### Ne pas modifier la suite de ce fichier!
 
 # Programme mUDa:
 sname='mUDa.sh'
-spath='/usr/local/bin'
 
 # Fonctions d'appel des modules:
 sonmax(){
@@ -80,22 +86,39 @@ luminomax(){
 }
 
 nvpn(){
+    account=$($script nvpn Register info)
+    zenity --info --title="Nvpn" --width $app_width --text "$account"
     vpn_task=$(zenity --entry --title="Nvpn" --width $app_width --text="Choisir:" --entry-text="Connexion" "Compte NordVPN"  Annuler)
     if [[ $vpn_task == 'Compte NordVPN' ]]; then
+        zenity --question --title="Nvpn" --width $app_width --text="S'enregister dans NordVPN?"
+        if [[ $? -eq 1 ]]; then
+            $script nvpn Register off
+            if [[ $? -eq 0 ]]; then
+                exit 0
+            elif [[ $? -eq 5 ]]; then
+                errormod
+            else
+                error
+            fi
+        fi
         vpn_compte=$(zenity --entry --title="Nvpn" --width $app_width --text="Renseigner le compte NordVPN:")
         vpn_pass=$(zenity --password --title="Nvpn" --width $app_width --text="Renseigner le mot de passe NordVPN:")
-        $script nvpn Register set $vpn_compte $vpn_pass
+        $script nvpn Register $vpn_compte $vpn_pass
         if [[ $? -eq 0 ]]; then
             zenity --info --title="Nvpn" --width $app_width --text "Le compte est enregistre."
+        elif [[ $? -eq 5 ]]; then
+            errormod
         else
-            vpn_account=$($script nvpn Register info)
+            account=$($script nvpn Register info)
             if [[ $? -eq 0 ]]; then
                 zenity --info --title="Nvpn" --width $app_width --text "L'enregistrement n'a pas abouti.\nCela peut vouloir dire que les informations de connexion sont incorrectes. ..."
-                zenity --info --title="Nvpn" --width $app_width --text "Cela arrive aussi si vous etes deja enregistrer.\nSuivant les informations ci-dessous connecter vous directement au VPN ou retenter l'enregistrement:\n$vpn_account"
+                zenity --info --title="Nvpn" --width $app_width --text "Cela arrive aussi si vous etes deja enregistrer.\nSuivant les informations ci-dessous connecter vous directement au VPN ou retenter l'enregistrement:\n$account"
                 zenity --question --title="Nvpn" --width $app_width --text='Continuer vers la connexion NordVPN'
                 if [[ $? -eq 1 ]]; then
                     exit 0
                 fi
+            elif [[ $? -eq 5 ]]; then
+                errormod
             else
                 error
 	          fi
@@ -120,12 +143,20 @@ nvpn(){
         echo $rc
         if [[ $rc -eq 0 ]]; then
             zenity --info --title="Nvpn" --width $app_width --text "Connexion NordVPN active."
-        elif [[ $rc -eq 6 ]]; then
+        elif [[ $rc -eq 5 ]]; then
+            errormod
+        elif [[ $rc -eq 106 ]]; then
             zenity --question --title="Nvpn" --width $app_width --text "Le nom du pays n'est pas reconnu par NordVPN, voulez-vous une liste des pays disponibles avec NordVPN?"
             if [[ $? -eq 0 ]]; then
                 countries=$($script nvpn "CountList")
-                zenity --info --title="Nvpn" --width $app_width --text "Copier un nom, relancer mUDa et coller le au moment d'indiquer le pays.\n$countries"
-                zenity --info --title="Nvpn" --width $app_width --text "N'imposer le pays que pour contourner un blocage, sinon laisser NordVPN trouver le meilleur serveur pour vous."
+                if [[ $? -eq 0 ]]; then
+                    zenity --info --title="Nvpn" --width $app_width --text "Copier un nom, relancer mUDa et coller le au moment d'indiquer le pays.\n$countries"
+                    zenity --info --title="Nvpn" --width $app_width --text "N'imposer le pays que pour contourner un blocage, sinon laisser NordVPN trouver le meilleur serveur pour vous."
+                elif [[ $? -eq 5 ]]; then
+                    errormod
+                else
+                    error
+	              fi
             fi
         else
             error
@@ -134,6 +165,8 @@ nvpn(){
         $script nvpn stop
         if [[ $? -eq 0 ]]; then
             zenity --info --title="Nvpn" --width $app_width --text "Connexion NordVPN desactive."
+        elif [[ $? -eq 5 ]]; then
+            errormod
         else
             error
 	      fi
@@ -150,6 +183,11 @@ etat(){
 error(){
     zenity --error --title="mUDa" --width $app_width --text "Erreur durant l'execution du programme, contacter l'admin."
     exit 2
+}
+
+errormod(){
+    zenity --error --title="mUDa" --width $app_width --text "Erreur: Le programme dont depand le module est introuvable."
+    exit 3
 }
 
 # Boucle principale:

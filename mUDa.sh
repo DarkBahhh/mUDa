@@ -56,6 +56,11 @@ nvpnDefaultCountry=""
 #     DON'T EDIT      DON'T EDIT     DON'T EDIT     DON'T EDIT     DON'T EDIT
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+# Modules dependencies:
+#dep_path='/usr/local/bin'
+dep_path='./'
+nvpn_script='nvpntool.sh'
+
 # Input:
 module=$1
 shift
@@ -80,6 +85,8 @@ usage(){
 	  printf "\t\tstart|stop                           : Start or stop the module;\n"
 	  printf "\tWhere Module is nvpn:\n"
 	  printf "\t\tRegister <UserName> <UserPass>       : Login to NordVPN with <UserName> as user account and <UserPass> as user password;\n"
+	  printf "\t\tRegister off                         : Logout from NordVPN;\n"
+	  printf "\t\tRegister info                        : Show NordVPN account information;\n"
 	  printf "\t\tCountList                            : Return countries available with NordVPN;\n"
 	  printf "\t\tstart P2P|PUB [<CountryName>]        : Start a connection to NordVPN servers group peer2peer or Standard servers (this enable NordVPN KillSwitch too), optionnaly set a country name;\n"
 	  printf "\t\tstop                                 : Stop connection to NordVPN and disable NordVPN KillSwitch;\n"
@@ -88,11 +95,11 @@ usage(){
 	  printf "\t2          : Error with specific module parameters (Module parameter is accepted);\n"
 	  printf "\t3          : Error in NordVPN moudle connexion parameters;\n"
 	  printf "\t4          : Unkown error in system command (xrandr, nordvpn ...);\n"
-	  printf "\t5          : Error in NordVPN login (more a warning than an error);\n"
-	  printf "\t6          : Error with NordVPN CountryName parameters;\n"
+	  printf "\t105        : Error in NordVPN login (more a warning than an error);\n"
+	  printf "\t106        : Error with NordVPN CountryName parameters;\n"
 }
 
-#    Show modules states:
+#    Show modules state:
 state(){
     state_output=''
     while read line; do
@@ -152,90 +159,72 @@ luminomax(){
 }
 
 #    NordVPN module:
-nvpnRegister(){
-    if [[ $1 == 'set' ]]; then
-        nordvpn login -u $2 -p $3
-        if [[ $? -ne 0 ]];then
-            exit 5
+nvpn(){
+    mod_script=$dep_path'/'$nvpn_script
+    option=''
+    if [[ ! -f $mod_script ]]; then
+        exit 5
+    fi
+    if [[ $1 == 'Register' ]]; then
+        shift
+        if [[ $1 == 'info' ]]; then
+            $mod_script register info
+        elif [[ $1 == 'off' ]]; then
+            $mod_script register off
+        else
+            $mod_script register on $@
         fi
-    elif [[ $1 == 'info' ]];then
-        nvpnInfo=$(nordvpn account)
-        if [[ $? -eq 0 ]];then
-            echo -e $nvpnInfo
+        if [[ $? -ne 0 ]];then
+            exit 105
+        fi
+    elif [[ $1 == 'CountList' ]]; then
+        clist=$($mod_script listcountries)
+        if [[ $? -eq 0 ]]; then
+            echo -e $clist
         else
             exit 4
         fi
-    fi
-}
-
-nvpnCountryList(){
-    clist=$(nordvpn countries)
-    if [[ $? -eq 0 ]]; then
-        echo -e $clist
-    fi
-}
-
-nvpnP2P(){
-    if [[ $? -eq 1 ]]; then
-        nvpnStop
-    fi
-    nordvpn connect -g P2P $nvpn_Country && nordvpn set killswitch on
-	  if [[ $? -eq 0 ]]; then
-        sed -i 's/nVPNp2p 0/nVPNp2p 1/g' $stateFile
-        sed -i 's/nVPNpub 1/nVPNpub 0/g' $stateFile
-    elif [[ $? -eq 1 ]]; then
-        exit 6
-	  else
-	      exit 4
-    fi
-}
-
-nvpnPublicNet(){
-    if [[ $? -eq 1 ]]; then
-        nvpnStop
-    fi
-    nordvpn connect -g Standard_VPN_Servers $nvpn_Country && nordvpn set killswitch on
-	  if [[ $? -eq 0 ]]; then
-        sed -i 's/nVPNpub 0/nVPNpub 1/g' $stateFile
-        sed -i 's/nVPNp2p 1/nVPNp2p 0/g' $stateFile
-    elif [[ $? -eq 1 ]]; then
-        exit 6
-	  else
-	      exit 4
-    fi
-}
-
-nvpnStop(){
-    nordvpn set killswitch off && nordvpn disconnect
-	  if [[ $? -eq 0 ]]; then
-        sed -i 's/nVPNpub 1/nVPNpub 0/g' $stateFile
-        sed -i 's/nVPNp2p 1/nVPNp2p 0/g' $stateFile
-	  else
-	      exit 4
-    fi
-}
-
-nvpn(){
-    if [[ $1 == 'Register' ]]; then
-        shift
-        nvpnRegister $@
-    elif [[ $1 == 'CountList' ]]; then
-        nvpnCountryList
     elif [[ $1 == 'start' ]]; then
         if [[ -n $3 ]]; then
             nvpn_Country=$3
         else
             nvpn_Country=$nvpnDefaultCountry
         fi
+        if [[ ! -z $nvpn_Country ]]; then
+            option=$option' -c '$nvpn_Country
+        fi
         if [[ $2 == 'P2P' ]]; then
-            nvpnP2P
+            $mod_script $option p2p
+	          if [[ $? -eq 0 ]]; then
+                sed -i 's/nVPNp2p 0/nVPNp2p 1/g' $stateFile
+                exit 0
+            elif [[ $? -eq 1 ]]; then
+                exit 106
+	          else
+	              exit 4
+            fi
         elif [[ $2 == 'PUB' ]]; then
-            nvpnPublicNet
+            $mod_script $option std
+	          if [[ $? -eq 0 ]]; then
+                sed -i 's/nVPNpub 0/nVPNpub 1/g' $stateFile
+                exit 0
+            elif [[ $? -eq 1 ]]; then
+                exit 106
+	          else
+	              exit 4
+            fi
         else
             exit 3
         fi
     elif [[ $1 == 'stop' ]]; then
-        nvpnStop
+        $mod_script stop
+	      if [[ $? -eq 0 ]]; then
+            sed -i 's/nVPNp2p 1/nVPNp2p 0/g' $stateFile
+            sed -i 's/nVPNpub 1/nVPNpub 0/g' $stateFile
+            exit 0
+	      else
+	          exit 4
+        fi
     else
         exit 2
     fi
