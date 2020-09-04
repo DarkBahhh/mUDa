@@ -57,8 +57,7 @@ nvpnDefaultCountry=""
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Modules dependencies:
-#dep_path='/usr/local/bin'
-dep_path='./'
+dep_path='/usr/local/bin'
 nvpn_script='nvpntool.sh'
 
 # Input:
