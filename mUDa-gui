@@ -37,8 +37,7 @@ modules_list="SonMax LuminoMax Nvpn"
 ### La ligne suivante permet d'indiquer le chemin d'acces vers le programme systeme
 ### "mUDa.sh", modifier le chemin si le programme n'est pas a l'enplacement par
 ### defaut:
-#spath='/usr/local/bin'
-spath='./'
+spath='/usr/local/bin'
 ###
 ###
 ### Ne pas modifier la suite de ce fichier!
